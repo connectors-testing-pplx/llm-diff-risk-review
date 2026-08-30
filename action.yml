@@ -1,0 +1,60 @@
+name: "LLM Diff Risk Review"
+description: "Rate the risk of a pull request diff with any OpenAI-compatible LLM and auto-approve the PR when the risk is low."
+author: "connectors-testing-pplx"
+branding:
+  icon: "shield"
+  color: "green"
+
+inputs:
+  github-token:
+    description: "GitHub token used to fetch the diff and post the review. Defaults to the automatic GITHUB_TOKEN."
+    required: false
+    default: ${{ github.token }}
+  llm-base-url:
+    description: "Base URL of an OpenAI-compatible chat-completions endpoint. Works with OpenAI, OpenRouter, Groq, Together, Azure OpenAI, Ollama, LM Studio, vLLM, etc."
+    required: false
+    default: "https://api.openai.com/v1"
+  llm-api-key:
+    description: "API key for the LLM endpoint. For local servers (Ollama/LM Studio) a dummy value is fine."
+    required: true
+  llm-model:
+    description: "Model name to use for the chat completion (e.g. gpt-4o-mini, llama3.1, claude-3-5-sonnet via OpenRouter, etc.)."
+    required: true
+  llm-extra-headers:
+    description: "Optional JSON object of extra HTTP headers to send to the LLM (e.g. for OpenRouter routing)."
+    required: false
+    default: "{}"
+  risk-threshold:
+    description: "Maximum risk score (1-10) considered low risk and therefore auto-approvable. The PR is approved when the LLM's score is <= this threshold."
+    required: false
+    default: "3"
+  max-diff-chars:
+    description: "Cap the diff sent to the LLM to this many characters to control token usage and cost."
+    required: false
+    default: "60000"
+  approve:
+    description: "Whether to actually submit an APPROVE review on low-risk PRs. Set to 'false' to only comment."
+    required: false
+    default: "true"
+  fail-on-high-risk:
+    description: "If 'true', the action fails the workflow run (exit 1) when risk is high. Default 'false' only leaves a review."
+    required: false
+    default: "false"
+  pull-number:
+    description: "Pull request number. Defaults to the PR that triggered the workflow."
+    required: false
+    default: ""
+
+outputs:
+  risk-score:
+    description: "Numeric risk score from 1 (safest) to 10 (riskiest) returned by the LLM."
+  risk-level:
+    description: "Qualitative risk level: low, medium, or high."
+  approved:
+    description: "'true' if the PR was auto-approved, otherwise 'false'."
+  reasoning:
+    description: "Short explanation from the LLM justifying the risk rating."
+
+runs:
+  using: "node20"
+  main: "dist/index.js"
