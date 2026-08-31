@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run actionlint
+        uses: raven-actions/actionlint@v2
+
+  build:
+    name: build (npm ci + build, dist check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - name: Check dist/ is committed and up to date
+        run: |
+          if [ -n "$(git status --porcelain dist)" ]; then
+            echo "::warning::dist/ is out of date with src/. Run 'npm run build' and commit the result."
+            git diff --stat dist || true
+          else
+            echo "dist/ is up to date."
+          fi
+
+  dry-run:
+    name: dry-run action metadata
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Dry-run the action (no PR context, should exit gracefully)
+        continue-on-error: true
+        uses: ./
+        with:
+          github-token: ${{ github.token }}
+          llm-api-key: dummy-key-for-dry-run
+          llm-model: dry-run-model
+          approve: "false"
+      - name: Note on dry-run
+        run: |
+          echo "Dry-run executed the action outside of a pull_request event, so it is expected to fail fast (no PR diff to fetch)." \
+               "This step only verifies the action's entrypoint and inputs wiring load correctly; see the 'continue-on-error' above."

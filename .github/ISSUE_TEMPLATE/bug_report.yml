@@ -1,0 +1,45 @@
+name: Bug report
+description: Report a problem with the LLM Diff Risk Review action
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting an issue. Please include your workflow YAML (redact secrets) and any relevant Action run logs.
+  - type: input
+    id: version
+    attributes:
+      label: Action version / ref
+      placeholder: v1 / a1b2c3d
+    validations:
+      required: true
+  - type: input
+    id: llm-provider
+    attributes:
+      label: LLM provider / base URL
+      placeholder: OpenAI / OpenRouter / Ollama / self-hosted vLLM
+    validations:
+      required: false
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead? Include the risk-score/risk-level output if available.
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Workflow YAML
+      description: Paste the job step that uses this action (redact API keys/tokens).
+      render: yaml
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      render: shell
+    validations:
+      required: false
